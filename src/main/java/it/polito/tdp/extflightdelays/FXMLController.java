@@ -3,6 +3,8 @@ package it.polito.tdp.extflightdelays;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.extflightdelays.model.Airport;
+import it.polito.tdp.extflightdelays.model.Arco;
 import it.polito.tdp.extflightdelays.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,7 +35,7 @@ public class FXMLController {
     private Button btnAnalizza;
 
     @FXML
-    private ComboBox<?> cmbBoxAeroportoPartenza;
+    private ComboBox<Airport> cmbBoxAeroportoPartenza;
 
     @FXML
     private Button btnAeroportiConnessi;
@@ -47,16 +49,45 @@ public class FXMLController {
     @FXML
     void doAnalizzaAeroporti(ActionEvent event) {
 
+    	int distance ;
+    	try {
+    	distance = Integer.parseInt(distanzaMinima.getText());
+    	this.model.creaGrafo(distance);
+    	this.txtResult.appendText("GRAFO CREATO !! \n");
+    	this.txtResult.appendText("numero VERTICI "+this.model.numeroVertici()+"\n");
+    	this.txtResult.appendText("numero ARCHI "+this.model.numeroArchi()+"\n");
+    	this.cmbBoxAeroportoPartenza.getItems().addAll(this.model.getVertici());
+    	}
+    	catch (NumberFormatException e) {
+    		this.txtResult.appendText("devi inserire un numero");
+    	}
     }
 
     @FXML
     void doCalcolaAeroportiConnessi(ActionEvent event) {
 
+    	Airport a = this.cmbBoxAeroportoPartenza.getValue();
+    	this.txtResult.clear();
+    	for (Arco ar : this.model.getAdicenti(a))
+    	    this.txtResult.appendText(ar.getA1().toString()+" "+ar.getPeso()+"\n");
     }
 
     @FXML
     void doCercaItinerario(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	int miglia;
+    	Airport a = this.cmbBoxAeroportoPartenza.getValue();
+    	try {
+    	 miglia = Integer.parseInt(numeroVoliTxtInput.getText());
+    	for (Airport air : this.model.getPercorsoMigliore(miglia, a))
+    	     this.txtResult.appendText(air.toString()+"\n");
+    	
+    	this.txtResult.appendText("DISTANZA "+this.model.distanzaRaggiunte());
+    	     
+    	}
+    	catch (NumberFormatException e) {
+    		this.txtResult.appendText("devi inserire un numero");
+    	}
     }
 
     @FXML

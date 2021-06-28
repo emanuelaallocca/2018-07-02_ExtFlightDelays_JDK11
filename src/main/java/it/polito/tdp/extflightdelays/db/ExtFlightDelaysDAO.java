@@ -7,9 +7,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import it.polito.tdp.extflightdelays.model.Airline;
 import it.polito.tdp.extflightdelays.model.Airport;
+import it.polito.tdp.extflightdelays.model.Arco;
 import it.polito.tdp.extflightdelays.model.Flight;
 
 public class ExtFlightDelaysDAO {
@@ -37,7 +39,7 @@ public class ExtFlightDelaysDAO {
 		}
 	}
 
-	public List<Airport> loadAllAirports() {
+	public void loadAllAirports(Map<Integer, Airport> idMap) {
 		String sql = "SELECT * FROM airports";
 		List<Airport> result = new ArrayList<Airport>();
 
@@ -50,7 +52,41 @@ public class ExtFlightDelaysDAO {
 				Airport airport = new Airport(rs.getInt("ID"), rs.getString("IATA_CODE"), rs.getString("AIRPORT"),
 						rs.getString("CITY"), rs.getString("STATE"), rs.getString("COUNTRY"), rs.getDouble("LATITUDE"),
 						rs.getDouble("LONGITUDE"), rs.getDouble("TIMEZONE_OFFSET"));
+				idMap.put(rs.getInt("ID"), airport);
 				result.add(airport);
+			}
+
+			conn.close();
+			//return result;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Errore connessione al database");
+			throw new RuntimeException("Error Connection Database");
+		}
+	}
+	public List<Arco> getArchi(Map<Integer, Airport> idMap, int distance) {
+		String sql = "SELECT f.ORIGIN_AIRPORT_ID, f.DESTINATION_AIRPORT_ID, AVG(f.DISTANCE) AS peso "
+				+"FROM flights f "
+				+"GROUP BY f.ORIGIN_AIRPORT_ID, f.DESTINATION_AIRPORT_ID "
+				+"HAVING peso > ?";
+		
+		List<Arco> result = new ArrayList<Arco>();
+
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, distance);
+			
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				Airport a1 = idMap.get(rs.getInt("f.ORIGIN_AIRPORT_ID"));
+				Airport a2 = idMap.get(rs.getInt("f.DESTINATION_AIRPORT_ID"));
+				if (a1!=null && a2!=null) {
+				Arco a = new Arco (a1, a2, rs.getDouble("peso"));
+				result.add(a);
+				}
 			}
 
 			conn.close();
